@@ -7,7 +7,7 @@ import {
 } from "../ui/resizable";
 import { cn } from "@/lib/utils";
 import Sidebar from "../Sidebar";
-
+import MessageContainer from "./MessageContainer";
 import { User } from "@/db/dummy";
 import { useSelectedUser } from "@/store/useSelectedUser";
 
@@ -85,7 +85,7 @@ const ChatLayout = ({ defaultLayout = [320, 480], users }: ChatLayoutProps) => {
             </div>
           </div>
         )}
-       
+        {selectedUser && <MessageContainer />}
       </ResizablePanel>
     </ResizablePanelGroup>
   );

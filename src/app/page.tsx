@@ -42,8 +42,6 @@ async function getUsers(): Promise<User[]> {
 }
 
 export default async function Home() {
-  console.log(process.env.UPSTASH_REDIS_REST_URL); // Should print the URL
-  console.log(process.env.UPSTASH_REDIS_REST_TOKEN); // Sho
   const cookieStore = await cookies();
   const layout = cookieStore.get("react-resizable-panels:layout");
   const defaultLayout = layout ? JSON.parse(layout.value) : undefined;

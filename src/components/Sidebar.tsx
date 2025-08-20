@@ -39,7 +39,7 @@ const Sidebar = ({ isCollapsed, users }: SidebarProps) => {
       )}
 
       <ScrollArea className="gap-2 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
-        {users.map((user, idx) =>
+        {USERS.map((user, idx) =>
           isCollapsed ? (
             <TooltipProvider key={idx}>
               <Tooltip delayDuration={0}>
