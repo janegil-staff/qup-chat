@@ -21,7 +21,7 @@ const page = () => {
             alt="RediStash Logo"
             width={763}
             height={173}
-            className="mt-20 w-[420px] z-0 pointer-events-none select-none"
+            className="mt-20 w-[420px] z-0 pointer-events-none select-none -m-8"
           />
 
           <p className="text-2xl md:text-3xl text-balance z-10">
@@ -37,7 +37,7 @@ const page = () => {
             <span className="text-green-500/90 font-bold px-2">
               NEED TO
             </span>{" "}
-            build
+            know
           </p>
           <AuthButtons />
         </div>
