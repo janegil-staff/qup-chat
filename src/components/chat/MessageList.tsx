@@ -1,14 +1,41 @@
-import { messages, USERS } from "@/db/dummy";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { Avatar, AvatarImage } from "../ui/avatar";
+import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { useSelectedUser } from "@/store/useSelectedUser";
+import { useQuery } from "@tanstack/react-query";
+import { getMessages } from "@/actions/message.actions";
+import { useEffect, useRef } from "react";
+import MessageSkeleton from "../skeletons/MessageSkeleton";
 
 const MessageList = () => {
+  const { selectedUser } = useSelectedUser();
+  const { user: currentUser, isLoading: isUserLoading } =
+    useKindeBrowserClient();
 
-  const selectedUser = USERS[0];
-  const currentUser = USERS[1];
+  const messageContainerRef = useRef<HTMLDivElement>(null);
+  const { data: messages, isLoading: isMessagesLoading } = useQuery({
+    queryKey: ["messages", selectedUser?.id],
+    queryFn: async () => {
+      if (selectedUser && currentUser) {
+        return await getMessages(selectedUser?.id, currentUser?.id);
+      }
+    },
+    enabled: !!selectedUser && !!currentUser && !isUserLoading,
+  });
+
+  useEffect(() => {
+    if (messageContainerRef.current) {
+      messageContainerRef.current.scrollTop =
+        messageContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
   return (
-    <div className="w-full overflow-y-auto overflow-x-hidden h-full flex flex-col">
+    <div
+      ref={messageContainerRef}
+      className="w-full overflow-y-auto overflow-x-hidden h-full flex flex-col"
+    >
       <AnimatePresence>
         {messages?.map((message, index) => (
           <motion.div
@@ -38,7 +65,7 @@ const MessageList = () => {
               {message.senderId === selectedUser?.id && (
                 <Avatar className="flex justify-center items-center">
                   <AvatarImage
-                    src={selectedUser?.image}
+                    src={selectedUser?.image || "/user-placeholder.png"}
                     alt="User Image"
                     className="border-2 border-white rounded-full"
                   />
@@ -68,6 +95,13 @@ const MessageList = () => {
             </div>
           </motion.div>
         ))}
+        {isMessagesLoading && (
+          <>
+            <MessageSkeleton />
+            <MessageSkeleton />
+            <MessageSkeleton />
+          </>
+        )}
       </AnimatePresence>
     </div>
   );
