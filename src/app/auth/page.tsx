@@ -26,12 +26,12 @@ const page = async () => {
             alt="RediStash Logo"
             width={763}
             height={173}
-            className="mt-20 w-[420px] z-0 pointer-events-none select-none"
+            className="mt-20 w-[420px] z-0 pointer-events-none select-none -mx-8"
           />
 
           <p className="text-2xl md:text-3xl text-balance z-10">
             The{" "}
-            <span className="bg-red-500 px-2 font-bold text-white">
+            <span className="text-red-500 px-2 font-bold">
               ULTIMATE
             </span>{" "}
             chat app
@@ -39,10 +39,10 @@ const page = async () => {
 
           <p className="text-2xl md:text-3xl mb-32 text-balance z-10">
             You{" "}
-            <span className="bg-green-500/90 font-bold px-2 text-white">
+            <span className="text-green-500/90 font-bold px-2">
               NEED TO
             </span>{" "}
-            build
+            try
           </p>
           <AuthButtons />
         </div>
