@@ -1,19 +1,19 @@
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Image as ImageIcon,
   Loader,
   SendHorizontal,
   ThumbsUp,
 } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import Image from "next/image";
 import { Textarea } from "../ui/textarea";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import EmojiPicker from "./EmojiPicker";
 import { Button } from "../ui/button";
 import useSound from "use-sound";
 import { usePreferences } from "@/store/usePreferences";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendMessageAction } from "@/actions/message.actions";
-import { useMutation } from "@tanstack/react-query";
-import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { useSelectedUser } from "@/store/useSelectedUser";
 import { CldUploadWidget, CloudinaryUploadWidgetInfo } from "next-cloudinary";
 import {
@@ -23,19 +23,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import Image from "next/image";
+import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { pusherClient } from "@/lib/pusher";
+import { Message } from "@/db/dummy";
 
 const ChatBottomBar = () => {
   const [message, setMessage] = useState("");
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const { selectedUser } = useSelectedUser();
+  const { user: currentUser } = useKindeBrowserClient();
+
   const { soundEnabled } = usePreferences();
+  const queryClient = useQueryClient();
+
   const [imgUrl, setImgUrl] = useState("");
 
   const [playSound1] = useSound("/sounds/keystroke1.mp3");
   const [playSound2] = useSound("/sounds/keystroke2.mp3");
   const [playSound3] = useSound("/sounds/keystroke3.mp3");
   const [playSound4] = useSound("/sounds/keystroke4.mp3");
+
+  const [playNotificationSound] = useSound("/sounds/notification.mp3");
 
   const playSoundFunctions = [playSound1, playSound2, playSound3, playSound4];
 
@@ -72,6 +80,41 @@ const ChatBottomBar = () => {
       setMessage(message + "\n");
     }
   };
+
+  useEffect(() => {
+    const channelName = `${currentUser?.id}__${selectedUser?.id}`
+      .split("__")
+      .sort()
+      .join("__");
+    const channel = pusherClient?.subscribe(channelName);
+
+    const handleNewMessage = (data: { message: Message }) => {
+      queryClient.setQueryData(
+        ["messages", selectedUser?.id],
+        (oldMessages: Message[]) => {
+          return [...oldMessages, data.message];
+        }
+      );
+
+      if (soundEnabled && data.message.senderId !== currentUser?.id) {
+        playNotificationSound();
+      }
+    };
+
+    channel.bind("newMessage", handleNewMessage);
+
+    // ! Absolutely important, otherwise the event listener will be added multiple times which means you'll see the incoming new message multiple times
+    return () => {
+      channel.unbind("newMessage", handleNewMessage);
+      pusherClient.unsubscribe(channelName);
+    };
+  }, [
+    currentUser?.id,
+    selectedUser?.id,
+    queryClient,
+    playNotificationSound,
+    soundEnabled,
+  ]);
 
   return (
     <div className="p-2 flex justify-between w-full items-center gap-2">
@@ -129,7 +172,7 @@ const ChatBottomBar = () => {
 
       <AnimatePresence>
         <motion.div
-          key={selectedUser?.id}
+        key={selectedUser?.id}
           layout
           initial={{ opacity: 0, scale: 1 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -155,6 +198,7 @@ const ChatBottomBar = () => {
               setMessage(e.target.value);
               playRandomKeyStrokeSound();
             }}
+            ref={textAreaRef}
           />
           <div className="absolute right-2 bottom-0.5">
             <EmojiPicker
@@ -167,6 +211,7 @@ const ChatBottomBar = () => {
             />
           </div>
         </motion.div>
+
         {message.trim() ? (
           <Button
             className="h-9 w-9 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0"
@@ -202,5 +247,4 @@ const ChatBottomBar = () => {
     </div>
   );
 };
-
 export default ChatBottomBar;

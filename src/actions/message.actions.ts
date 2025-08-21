@@ -3,6 +3,7 @@
 import { Message } from "@/db/dummy";
 import { redis } from "@/lib/db";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { pusherServer } from "@/lib/pusher";
 
 type SendMessageActionArgs = {
   content: string;
@@ -51,6 +52,7 @@ export async function sendMessageAction({
     timestamp,
     messageType,
   });
+
   await redis.zadd(`${conversationId}:messages`, {
     score: timestamp,
     member: JSON.stringify(messageId),
@@ -60,6 +62,10 @@ export async function sendMessageAction({
     .split("__")
     .sort()
     .join("__");
+
+  await pusherServer?.trigger(channelName, "newMessage", {
+    message: { senderId, content, timestamp, messageType },
+  });
 
   return { success: true, conversationId, messageId };
 }
