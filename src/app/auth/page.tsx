@@ -1,7 +1,12 @@
 import Image from "next/image";
 import AuthButtons from "./AuthButtons";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { redirect } from "next/navigation";
 
-const page = () => {
+const page = async () => {
+  const { isAuthenticated } = getKindeServerSession();
+  if (await isAuthenticated()) return redirect("/");
+
   return (
     <div className="flex h-screen w-full">
       <div
@@ -21,12 +26,12 @@ const page = () => {
             alt="RediStash Logo"
             width={763}
             height={173}
-            className="mt-20 w-[420px] z-0 pointer-events-none select-none -m-8"
+            className="mt-20 w-[420px] z-0 pointer-events-none select-none"
           />
 
           <p className="text-2xl md:text-3xl text-balance z-10">
             The{" "}
-            <span className="text-red-500 px-2 font-bold">
+            <span className="bg-red-500 px-2 font-bold text-white">
               ULTIMATE
             </span>{" "}
             chat app
@@ -34,10 +39,10 @@ const page = () => {
 
           <p className="text-2xl md:text-3xl mb-32 text-balance z-10">
             You{" "}
-            <span className="text-green-500/90 font-bold px-2">
+            <span className="bg-green-500/90 font-bold px-2 text-white">
               NEED TO
             </span>{" "}
-            know
+            build
           </p>
           <AuthButtons />
         </div>
@@ -53,5 +58,4 @@ const page = () => {
     </div>
   );
 };
-
 export default page;
