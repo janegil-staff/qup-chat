@@ -15,12 +15,22 @@ import { sendMessageAction } from "@/actions/message.actions";
 import { useMutation } from "@tanstack/react-query";
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { useSelectedUser } from "@/store/useSelectedUser";
+import { CldUploadWidget, CloudinaryUploadWidgetInfo } from "next-cloudinary";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import Image from "next/image";
 
 const ChatBottomBar = () => {
   const [message, setMessage] = useState("");
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const { selectedUser } = useSelectedUser();
   const { soundEnabled } = usePreferences();
+  const [imgUrl, setImgUrl] = useState("");
 
   const [playSound1] = useSound("/sounds/keystroke1.mp3");
   const [playSound2] = useSound("/sounds/keystroke2.mp3");
@@ -66,12 +76,57 @@ const ChatBottomBar = () => {
   return (
     <div className="p-2 flex justify-between w-full items-center gap-2">
       {!message.trim() && (
-        <ImageIcon
-          size={20}
-          onClick={() => open()}
-          className="cursor-pointer text-muted-foreground"
-        />
+        <CldUploadWidget
+          signatureEndpoint={"/api/sign-cloudinary-params"}
+          onSuccess={(result, { widget }) => {
+            setImgUrl((result.info as CloudinaryUploadWidgetInfo).secure_url);
+            widget.close();
+          }}
+        >
+          {({ open }) => {
+            return (
+              <ImageIcon
+                size={20}
+                onClick={() => open()}
+                className="cursor-pointer text-muted-foreground"
+              />
+            );
+          }}
+        </CldUploadWidget>
       )}
+
+      <Dialog open={!!imgUrl}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Image Preview</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center items-center relative h-96 w-full mx-auto">
+            <Image
+              src={imgUrl}
+              alt="Image Preview"
+              fill
+              className="object-contain"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="submit"
+              onClick={() => {
+                sendMessage({
+                  content: imgUrl,
+                  messageType: "image",
+                  receiverId: selectedUser?.id!,
+                });
+                setImgUrl("");
+              }}
+            >
+              Send
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <AnimatePresence>
         <motion.div
           key={selectedUser?.id}
