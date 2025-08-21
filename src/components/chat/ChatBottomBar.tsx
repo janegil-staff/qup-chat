@@ -49,7 +49,9 @@ const ChatBottomBar = () => {
 
   const playRandomKeyStrokeSound = () => {
     const randomIndex = Math.floor(Math.random() * playSoundFunctions.length);
-    soundEnabled && playSoundFunctions[randomIndex]();
+    if (soundEnabled) {
+      playSoundFunctions[randomIndex]();
+    }
   };
 
   const { mutate: sendMessage, isPending } = useMutation({
@@ -58,11 +60,12 @@ const ChatBottomBar = () => {
 
   const handleSendMessage = () => {
     if (!message.trim()) return;
+    if (!selectedUser?.id) return;
 
     sendMessage({
       content: message,
       messageType: "text",
-      receiverId: selectedUser?.id!,
+      receiverId: selectedUser.id,
     });
     setMessage("");
 
@@ -122,8 +125,11 @@ const ChatBottomBar = () => {
         <CldUploadWidget
           signatureEndpoint={"/api/sign-cloudinary-params"}
           onSuccess={(result, { widget }) => {
-            setImgUrl((result.info as CloudinaryUploadWidgetInfo).secure_url);
-            widget.close();
+            const info = result.info as CloudinaryUploadWidgetInfo;
+            if (info?.secure_url) {
+              setImgUrl(info.secure_url);
+              widget.close();
+            }
           }}
         >
           {({ open }) => {
@@ -156,11 +162,14 @@ const ChatBottomBar = () => {
             <Button
               type="submit"
               onClick={() => {
+                if (!selectedUser?.id) return;
+
                 sendMessage({
-                  content: imgUrl,
-                  messageType: "image",
-                  receiverId: selectedUser?.id!,
+                  content: message,
+                  messageType: "text",
+                  receiverId: selectedUser.id,
                 });
+
                 setImgUrl("");
               }}
             >
@@ -172,7 +181,7 @@ const ChatBottomBar = () => {
 
       <AnimatePresence>
         <motion.div
-        key={selectedUser?.id}
+          key={selectedUser?.id ?? "no-user"}
           layout
           initial={{ opacity: 0, scale: 1 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -232,10 +241,12 @@ const ChatBottomBar = () => {
                 size={20}
                 className="text-muted-foreground"
                 onClick={() => {
+                  if (!selectedUser?.id) return;
+
                   sendMessage({
                     content: "👍",
                     messageType: "text",
-                    receiverId: selectedUser?.id!,
+                    receiverId: selectedUser.id,
                   });
                 }}
               />
